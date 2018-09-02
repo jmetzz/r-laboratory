@@ -6,7 +6,7 @@ function usage {
     echo "       -h shows this message"
     echo "       -b <Location of Dockerfile> build docker image"
     echo "       -t <tag> sets docker image tag (Dafault: myrstudio)"
-    echo "       -r run docker image using the name defined with '-t' option"
+    echo "       -r <container name> run docker image"
     echo
 }
 
