@@ -8,5 +8,6 @@ Spin up the container
 
     docker run -d -p 8787:8787 -e ROOT=TRUE -e PASSWORD=your-password-goes-here myrstudio
     
-Access RStudio on your browser http://localhost:8787/
-
+Visit localhost:8787 in your browser and log in with username _rstudio_ 
+and the password you set. NB: Setting a password is now *REQUIRED*. 
+Container will error otherwise.

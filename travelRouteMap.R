@@ -3,8 +3,8 @@
 # Create Air Travel Route Maps in ggplot
 
 # Read flight list
-#flights <- read.csv("C:\\workspace\\personal\\scripts\\R\\flights.csv", stringsAsFactors = FALSE)
-flights <- read.csv("/cygdrive/c/workspace/personal/scripts/R/flights.csv", stringsAsFactors = FALSE)
+flights <- read.csv("myflights.csv", stringsAsFactors = FALSE)
+
 
 # Lookup coordinates
 library(ggmap)
@@ -19,6 +19,7 @@ flights <- merge(flights, airports, by.x="From", by.y="airport")
 # Plot flight routes
 library(ggplot2)
 library(ggrepel)
+europe <- c(left = -12, bottom = 35, right = 30, top = 63)
 worldmap <- borders("world", colour="#efede1", fill="#efede1") # create a layer of borders
 
 
