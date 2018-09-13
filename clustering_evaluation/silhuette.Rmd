@@ -1,0 +1,200 @@
+---
+title: "Clustering evaluation - internal indexes"
+output: html_notebook
+---
+
+Whenever doing unsupervised learning for any reason, the big question that always pops up is __how to evualte the results?__.
+
+It is indeed quite hard to answer, especially when we don't have a source of thruth to compare with. If you are using unsupervised learning in the first place, chances are (quite big actually) that you don't have access the any source of thruth. Thus, we have to really on some assumptions and indexes.
+
+There are some approaches one can follow to try to get some insight from the cluster partitions and the data distribution. This could be purely based on probabilistic measures such as log-likelihood, if the unsupervised learning algorithm is probabilistic. 
+
+Another option could be using a supervised learner on a related auxiliary task. Considering the unsupervised method produces latent variables, you can think of these latent variables as being a representation of the input data. Then use these latent variables as input for a supervised classifier performing some task related to the domain the original data is from. The performance of the supervised method can then serve as a surrogate for the performance of the unsupervised one. This can be carried out by utilizing, for instance, cross-validation to evaluate the overall learning process. By doing so, you can use evaluation metrics (i.e., Confusion Matrix, F-Measure, etc.) of classification technique to evaluate the clustering algorithm used in the first step.
+
+Formally, to measure the quality of clustering results, there are two kinds of validity indices: *external indices* and *internal indices* (Wang et al., 2009).
+
+An external index is a measure of agreement between two partitions where the first partition is the a priori known clustering structure, and the second results from the clustering procedure (Dudoit et al., 2002). For external indices, we evaluate the results of a clustering algorithm based on a known cluster structure of a data set (or cluster labels).
+
+Internal indices are used to measure the goodness of a clustering structure without external information (Tseng et al., 2005). For internal indices, we evaluate the results using quantities and features inherent in the data set. The optimal number of clusters is usually determined based on an internal validity index.
+
+  
+# Internal Clustering evaluation indeces
+
+In this section, I'll describe one of the most widely used clustering validation indices. But first recall that the goal of partitioning clustering algorithms is __to split the data set into clusters of objects__, such that:
+
+- the objects in the same cluster are similar as much as possible,
+- and the objects in different clusters are highly distinct
+
+That is, we want the average distance within cluster to be as small as possible; and the average distance between clusters to be as large as possible.
+
+Internal validation measures reflect often the compactness, the connectedness and the separation of the cluster partitions.
+
+- *Compactness* or cluster cohesion: Measures how close are the objects within the same cluster. A lower within-cluster variation is an indicator of a good compactness (i.e., a good clustering). The different indices for evaluating the compactness of clusters are base on distance measures such as the cluster-wise within average/median distances between observations.
+- *Separation*: Measures how well-separated a cluster is from other clusters. The indices used as separation measures include distances between cluster centers and the pairwise minimum distances between objects in different clusters.
+- *Connectivity*: corresponds to what extent items are placed in the same cluster as their nearest neighbors in the data space. The connectivity has a value between 0 and infinity and should be minimized.
+
+There are plenty of indices described on the literature, among them:
+
+- Silhouette index 
+- Dunn index - seeks for cluster solution with maximally demarcated, separated clusters – if possible, of approximately same physical size (diameter)
+- Root-mean-square standard deviation (RMSSTD) index
+- Distance between two clusters (CD) index
+- Weighted inter-intra index
+- Homogeneity index
+- Separation index
+- Cophenetic correlation based indices
+
+and much more.
+
+    Caviat 1: Beware of overfitting! all clustering methods seek to maximize some version of internal validity1 (it's what clustering is about), so high validity may be partly due to random peculiarity of the given dataset; having a test dataset is always beneficial.
+
+    Caviat 2: Be careful when relying on such metrics. You measure a mathematical quantity that may not be capturing your needs.
+
+
+Having said that, let's see how Silhouette index can be used.
+
+
+# Silhouette coefficient
+
+The Silhouette analysis measures how well an observation (or object) is clustered and it estimates the average distance between clusters. The silhouette plot displays a measure of how close each point in one cluster is to points in the neighboring clusters.
+
+We must however be aware that some algorithms such as k-means try to optimize exactly these parameters, and as such introduce a particular type of bias; Consequently, this index is prone to __overfitting__ if you are using such algorithms. Therefore, when using internal evaluation methods, you need to be well aware of the properties of your algorithm and the actual measures. 
+
+To aleviate this issue you can try to do some kind of cross validation using validation set. For the silhouette coefficient this might not be enough due to the bias aspect mentioned previously. It could only make k-means look good in case this is the algorithm you are using. 
+
+So how does Silhouette can be useful? It can in fact employed when comparing different results of the same algorithm on the same dataset running with different parameters.
+
+    The equations you need to implement to calculate this index is presentad later.
+
+Let's see an example of how to use this index.
+
+    Note: make sure you've installe the required R packages: "factoextra", "fpc", "NbClust"
+   
+Load the libraries 
+
+```{r}
+library(factoextra)
+library(fpc)
+library(NbClust)
+```
+
+
+We’ll use the built-in R data set iris:
+
+```{r}
+# Excluding the column "Species" at position 5
+df <- iris[, -5]
+# Standardize
+df <- scale(df)
+```
+
+
+To illustrate the process let's use k-means to cluster the data and set k = 3.
+
+```{r}
+# K-means clustering
+km.res <- eclust(df, "kmeans", k = 3, nstart = 25, graph = FALSE)
+# Visualize k-means clusters
+fviz_cluster(km.res, geom = "point", ellipse.type = "norm",
+             palette = "jco", ggtheme = theme_minimal())
+```
+
+The actuall algorithm you use is not really relevant here since we want to test the silhuette index for clustering partition evaluation. Thus, you can also try with some other method, for example hierarchical clustering:
+
+    # Hierarchical clustering
+    hc.res <- eclust(df, "hclust", k = 3, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
+
+
+Now we can use fviz_silhouette to plot the silhourtte chat:
+
+
+
+Recall that the silhouette coefficient (Si) measures how similar an object $i$ is to the the other objects in its own cluster versus those in the neighbor cluster. Therefore $ -1 \leq s(o_i) \leq 1$.
+A value of $s(o_i)$ close to 1 indicates that the object is well clustered. In the other words, the object i
+is similar to the other objects in its group. A value of  $s(o_i)$ close to -1 indicates that the object is poorly clustered, and that assignment to some other cluster would probably improve the overall results.
+
+
+```{r}
+fviz_silhouette(km.res, palette = "jco", 
+                ggtheme = theme_classic(), print.summary = FALSE)
+```
+
+Note that some observations on the cluster 2 have negative Silhouette value, indicating these observations were wrongly clustered. We can see from the cluster plot that cluster 2 and 3 have a big intersection area with no clear separation between them. The elements on this intersection area ended up receiving a low Silhouette value.
+
+
+A bunch of extra information about Silhouette can be extracted as follow:
+
+```{r}
+silinfo <- km.res$silinfo
+# Silhouette widths of each observation
+head(silinfo$widths[, 1:3], 10)
+```
+
+```{r}
+# Average silhouette width of each cluster
+silinfo$clus.avg.widths
+```
+
+```{r}
+# The total average (mean of all individual silhouette widths)
+silinfo$avg.width
+```
+
+```{r}
+# The size of each clusters
+km.res$size
+```
+
+
+
+## How to calculate the Silhouette index
+
+
+Silhouette of a partition (set of clusters):
+\begin{equation}
+s(C) = \frac{1}{k} \sum_{i = 1}^k s(C_i)
+\end{equation}
+
+Silhouette index of a particular cluster:
+\begin{equation}
+s(C_i) = \frac{1}{|C_i|} \sum_{o_j \in C_i} s(o_j)
+\end{equation}
+
+Silhouette index of a particular object:
+\begin{equation}
+s(o_i) = \frac{b(o_i) - a(o_i)}{max(a(o_i), b(o_i))}
+\end{equation}
+
+Where:
+\begin{equation}
+a(o_i) = \frac{1}{|C_A| - 1} \Big[ \sum_{o_j \in C_A,~o_i \neq o_j} d(o_i, o_j) \Big]
+\end{equation}
+
+
+\begin{equation}
+b(o_i) = min_{B_B \neq C_A} \bigg\{ \frac{1}{|C_B|} \Big[ \sum_{o_j \in C_B} d(o_i, o_j) \Big] \bigg\}
+\end{equation}
+
+
+
+# References
+
+(Dudoit et al., 2002): Dudoit, S. & Fridlyand, J. (2002) A prediction-based resampling method for estimating the number of clusters in a dataset. Genome Biology, 3(7):0036.1-21.
+
+(Tseng et al., 2005): Thalamuthu, A, Mukhopadhyay, I, Zheng, X, & Tseng, G. C. (2006) Evaluation and comparison of gene clustering methods in microarray analysis. Bioinformatics, 22(19):2405-12.
+
+(Wang et al., 2009): Wang, Kaijun, Baijie Wang, and Liuqing Peng. "CVAP: Validation for cluster analyses." Data Science Journal 0 (2009): 0904220071.
+
+(Brock et al., 2008): Brock, G., Vasyl P., Susmita D. & Somnath D. (2008). ClValid: An R Package for Cluster Validation. Journal of Statistical Software, 2 (4):1–22. https://www.jstatsoft.org/v025/i04.
+
+(Charrad et al., 2014) Charrad, M., Nadia G., Véronique B. & Azam N. (2014). NbClust: An R Package for Determining the Relevant Number of Clusters in a Data Set. Journal of Statistical Software 61:1–36. http://www.jstatsoft.org/v61/i06/paper.
+
+
+
+
+
+
+
+
+
+
