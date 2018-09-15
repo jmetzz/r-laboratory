@@ -1,13 +1,18 @@
 # r-laboratory
 
-Build the docker image
+Use the script `lab.sh` to run the docker container with r and rstudio.
 
-    docker build -t myrstudio .
+    $ lab.sh -h
+    ./lab.sh [OPTIONS]
+           -h    shows this message
+           -b    <Location of Dockerfile> build docker image
+           -t    <tag> sets docker image tag (Dafault: myrstudio)
+           -r    <container name> run a docker container base on the image created with -b option
+           -f    flags to force the docker container run.
+                      If a container with the same name already exists it will be removed
+                      This flag only applies in conjunction to '-r' option.
+           -s    <container name> start an existing named container
+                      A container with the given name must exists (obviously)
     
-Spin up the container
-
-    docker run -d -p 8787:8787 -e ROOT=TRUE -e PASSWORD=your-password-goes-here myrstudio
-    
-Visit localhost:8787 in your browser and log in with username _rstudio_ 
-and the password you set. NB: Setting a password is now *REQUIRED*. 
-Container will error otherwise.
+Once the container is up, visit localhost:8787 in your browser and log in with username __rstudio__ 
+and the password __guest__. 
