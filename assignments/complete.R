@@ -1,4 +1,6 @@
 
+require(stringr)
+
 complete <- function(directory, id_vector = 1:332){
   ## directory: the path to the directory where the input files are located
   ## id_vector: an integer vector with monitor ID numbers to be used
@@ -27,5 +29,5 @@ complete <- function(directory, id_vector = 1:332){
     }
     count <- append(count, sum(logic_vec))
   }
-  data.frame(id=c(1, nrow(count)), count)
+  data.frame(id=c(1:length(count)), count)
 }
